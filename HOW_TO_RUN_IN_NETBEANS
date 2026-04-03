@@ -1,0 +1,172 @@
+# Running the Payment Microservice in NetBeans IDE
+
+> NetBeans has excellent built-in Maven and Java EE support, making it naturally suitable for Spring Boot projects.
+
+---
+
+## Prerequisites
+
+| Tool | Version | Download |
+|------|---------|----------|
+| Java JDK | 17+ | https://adoptium.net |
+| NetBeans IDE | 21+ (LTS) | https://netbeans.apache.org/front/main/download/ |
+| Docker Desktop | Latest | https://www.docker.com/products/docker-desktop/ |
+| Apache Maven | 3.8+ | (NetBeans bundles its own) |
+
+> ⚠️ NetBeans 21+ is required for Spring Boot 3.x (Jakarta EE namespace) support.
+
+---
+
+## Option A: Mock Mode (No External Services Needed)
+
+### Step 1 – Open the Project
+
+1. Launch NetBeans
+2. Go to `File → Open Project`
+3. Browse to:  
+   `c:\Users\Hp\OneDrive\Desktop\ANTIGRATIVY TESTS\Payment Processing Microservice`
+4. NetBeans detects it as a **Maven project** automatically → click **Open Project**
+
+### Step 2 – Wait for dependency download
+
+NetBeans will auto-resolve Maven dependencies. Watch the bottom status bar — wait until it says **"Build Successful"** or the red error markers clear.
+
+> If dependencies don't download: Right-click project → `Clean and Build` → then try `Reload POM`
+
+### Step 3 – Set the Spring profile to "mock"
+
+1. Right-click the project in the **Projects** panel → `Properties`
+2. Go to `Actions` → select `Run project`
+3. In **"Set Properties"** text area, add:
+   ```
+   spring-boot.run.profiles=mock
+   ```
+4. Click **OK**
+
+**Alternatively via pom.xml**, add a profile (no need to touch NetBeans properties):
+You can also just run from terminal inside NetBeans:
+- `Tools → Terminal` → type:
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=mock
+```
+
+### Step 4 – Run the project
+
+- Press `F6` (or click the green **Run** ▶ button)
+- NetBeans will build and run the Spring Boot app  
+- Watch the **Output** panel (bottom) for:
+  ```
+  Started PaymentServiceApplication in X.XXX seconds
+  ```
+
+### Step 5 – Test mock endpoints
+
+Open Terminal (`Tools → Terminal`) and run:
+
+```bash
+# Windows PowerShell syntax:
+
+# ✅ Test 1: Successful payment
+Invoke-RestMethod -Uri "http://localhost:8080/api/v1/mock/payments/process" `
+  -Method Post -ContentType "application/json" `
+  -Body '{"orderId":"ORDER-NB-001","amount":149.99,"currency":"USD","paymentMethodId":"pm_mock_visa","idempotencyKey":"nb-key-001"}'
+
+# ✅ Test 2: Simulated failure
+Invoke-RestMethod -Uri "http://localhost:8080/api/v1/mock/payments/fail" `
+  -Method Post -ContentType "application/json" `
+  -Body '{"orderId":"ORDER-NB-002","amount":50.00,"currency":"INR","paymentMethodId":"pm_mock_decline","idempotencyKey":"nb-key-002"}'
+
+# ✅ Test 3: Status check
+Invoke-RestMethod -Uri "http://localhost:8080/api/v1/mock/payments/status/ORDER-NB-001" -Method Get
+```
+
+### Step 6 – Run unit tests
+
+In NetBeans:
+- Right-click on `MockPaymentControllerTest.java` (under `src/test/java/...`) → `Run File`
+
+OR via terminal:
+```bash
+mvn test -Dtest=MockPaymentControllerTest
+```
+
+---
+
+## Option B: Full Stack Mode (Docker required)
+
+### Step 1 – Start Docker containers
+
+Open Terminal (`Tools → Terminal`):
+```bash
+cd "c:\Users\Hp\OneDrive\Desktop\ANTIGRATIVY TESTS\Payment Processing Microservice"
+docker compose up -d
+```
+
+Wait ~30 seconds, then verify:
+```bash
+docker ps
+```
+You should see 3 containers: `payments-db`, `payments-redis`, `payments-mq`
+
+### Step 2 – Configure your Stripe key
+
+1. Open `src/main/resources/application.properties` in NetBeans editor
+2. Replace the placeholder:
+   ```properties
+   stripe.api.key=sk_test_YOUR_ACTUAL_KEY_HERE
+   ```
+   > Get test key from: https://dashboard.stripe.com/test/apikeys
+
+### Step 3 – Run the application (default profile)
+
+- Remove the `mock` profile from project properties (`Project Properties → Actions → Run project`)
+- Press `F6`
+
+### Step 4 – Stop Docker when done
+
+```bash
+docker compose down
+```
+
+---
+
+## Debugging in NetBeans
+
+1. Open any Java file (e.g., `PaymentController.java`)
+2. Click the line number gutter to set a **breakpoint** (red dot appears)
+3. Press `Ctrl+F5` to **Debug Project** (or right-click → Debug)
+4. NetBeans will pause execution at your breakpoint — inspect variables in the **Variables** panel
+
+---
+
+## Running All Tests
+
+```bash
+# In NetBeans Terminal or external PowerShell:
+mvn test
+```
+
+Test results appear in:
+- **Output** panel in NetBeans
+- `target/surefire-reports/` folder as XML/HTML
+
+---
+
+## NetBeans Maven Panel Tips
+
+| Action | Where |
+|--------|-------|
+| Clean + Build | Right-click project → `Clean and Build` |
+| Reload POM | Right-click project → `Reload POM` |
+| Run specific goal | `Window → Maven → Goals` → type `spring-boot:run` |
+| View dependencies | Right-click project → `Show Dependency Graph` |
+
+---
+
+## H2 Console (Mock Mode Only)
+
+While running in mock mode, you can inspect the in-memory database:
+- URL: http://localhost:8080/h2-console
+- JDBC URL: `jdbc:h2:mem:payments_mock_db`
+- Username: `sa`
+- Password: *(leave blank)*
