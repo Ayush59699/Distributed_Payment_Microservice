@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Payment Service (Mock Mode)",
+            "request": "launch",
+            "mainClass": "com.plugpoint.paymentservice.PaymentServiceApplication",
+            "projectName": "payment-service",
+            "args": "",
+            "vmArgs": "-Dspring.profiles.active=mock",
+            "env": {
+                "SPRING_PROFILES_ACTIVE": "mock"
+            }
+        },
+        {
+            "type": "java",
+            "name": "Payment Service (Full Mode)",
+            "request": "launch",
+            "mainClass": "com.plugpoint.paymentservice.PaymentServiceApplication",
+            "projectName": "payment-service",
+            "args": "",
+            "vmArgs": "",
+            "env": {}
+        }
+    ]
+}

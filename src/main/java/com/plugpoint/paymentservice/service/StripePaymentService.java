@@ -13,16 +13,19 @@ import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Profile("!mock")
 public class StripePaymentService {
 
     private final PaymentRepository paymentRepository;
     private final IdempotencyService idempotencyService;
+    private final PaymentEventProducer paymentEventProducer;
 
     @Value("${stripe.api.key}")
     private String stripeApiKey;
@@ -82,6 +85,22 @@ public class StripePaymentService {
             }
 
             paymentRepository.save(payment);
+
+            // 5. Trigger asynchronous RabbitMQ event
+            if (payment.getStatus() == Payment.PaymentStatus.SUCCEEDED) {
+                try {
+                    paymentEventProducer.sendPaymentEvent(com.plugpoint.paymentservice.dto.PaymentEvent.builder()
+                            .paymentId(payment.getId())
+                            .orderId(payment.getOrderId())
+                            .amount(payment.getAmount())
+                            .currency(payment.getCurrency())
+                            .status(payment.getStatus().name())
+                            .gatewayReference(payment.getGatewayTransactionId())
+                            .build());
+                } catch (Exception e) {
+                    log.error("Failed to send MQ event: {}", e.getMessage());
+                }
+            }
 
             return PaymentResponse.builder()
                     .paymentId(payment.getId())

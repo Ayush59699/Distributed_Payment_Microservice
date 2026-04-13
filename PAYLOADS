@@ -1,0 +1,107 @@
+# Postman Payloads for Payment Processing Microservice
+
+This document contains the correct JSON payloads and endpoint details for all available routes in the microservice.
+
+> [!TIP]
+> Ensure you set the `Content-Type` header to `application/json` for all POST requests.
+> For routes marked as **(Mock Profile)**, ensure the application is running with the `-Dspring-boot.run.profiles=mock` flag.
+
+---
+
+## 1. Health & Home Check
+**Endpoint:** `GET /`  
+**Description:** Returns the service status and a list of available endpoints.
+
+**Postman Setup:**
+- **Method:** `GET`
+- **URL:** `{{base_url}}/`
+
+---
+
+## 2. Payment Processing (Mock Profile)
+
+### Process Payment
+**Endpoint:** `POST /api/v1/mock/payments/process`  
+**Description:** Simulates a successful payment processing with idempotency protection.
+
+**JSON Payload:**
+```json
+{
+    "orderId": "ORD-{{$randomInt}}",
+    "amount": 250.00,
+    "currency": "USD",
+    "paymentMethodId": "pm_card_visa",
+    "idempotencyKey": "{{$guid}}"
+}
+```
+
+### Fail Payment Simulation
+**Endpoint:** `POST /api/v1/mock/payments/fail`  
+**Description:** Simulates a failed payment scenario.
+
+**JSON Payload:**
+```json
+{
+    "orderId": "ORD-{{$randomInt}}",
+    "amount": 100.00,
+    "currency": "USD",
+    "paymentMethodId": "pm_card_declined",
+    "idempotencyKey": "{{$guid}}"
+}
+```
+
+### Check Payment Status
+**Endpoint:** `GET /api/v1/mock/payments/status/{orderId}`  
+**Description:** Retrieves the status of a previously processed (mock) payment.
+
+**Postman Setup:**
+- **Method:** `GET`
+- **URL:** `{{base_url}}/api/v1/mock/payments/status/ORD-123`
+
+---
+
+## 3. Wallet Operations
+
+### Get Wallet Balance
+**Endpoint:** `GET /api/v1/wallets/balance/{username}`  
+**Description:** Fetches the current balance for a specific user.
+
+**Postman Setup:**
+- **Method:** `GET`
+- **URL:** `{{base_url}}/api/v1/wallets/balance/john_doe`
+
+### Peer-to-Peer Transfer
+**Endpoint:** `POST /api/v1/wallets/transfer`  
+**Description:** Transfers funds between two user wallets.
+
+**JSON Payload:**
+```json
+{
+    "fromUsername": "alice",
+    "toUsername": "bob",
+    "amount": 50.00,
+    "idempotencyKey": "{{$guid}}"
+}
+```
+
+---
+
+## 4. Production Payment Routes (Stripe Integration)
+*Note: These are active only when the `mock` profile is NOT active.*
+
+### Process Stripe Payment
+**Endpoint:** `POST /api/v1/payments/process`  
+**Body:** Same as Mock Process Payment.
+
+### Check Stripe Payment Status
+**Endpoint:** `GET /api/v1/payments/status/{orderId}`  
+**URL Param:** `orderId`
+
+---
+
+## 5. H2 Database Console
+**Endpoint:** `/h2-console`  
+**Description:** Web interface to view the in-memory database.
+- **JDBC URL:** `jdbc:h2:mem:paymentdb`
+- **User:** `sa`
+- **Password:** (blank)

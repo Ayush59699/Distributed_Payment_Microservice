@@ -1,0 +1,97 @@
+QUICK START AND TEST
+
+Run- 
+.\mvnw spring-boot:run "-Dspring-boot.run.profiles=mock"
+docker-compose up -d
+
+
+
+Access- Health Check: 
+http://localhost:8080/ 
+
+H2 Console:
+http://localhost:8080/h2-console 
+
+JDBC URL:
+jdbc:h2:file:./data/payments_mock_db 
+User: sa 
+Password: null
+
+
+# Test APIs:
+
+Process Payment 
+POST     /api/v1/mock/payments/process 
+
+{
+    "orderId": "ORD-111",
+    "amount": 250.00,
+    "currency": "USD",
+    "paymentMethodId": "pm_card_visa",
+    "idempotencyKey": "SD_KEY_001"
+}
+
+Check Payment Status 
+GET       /api/v1/mock/payments/status/ORD-111
+
+-------------------------
+Transfer Money 
+POST   /api/v1/wallets/transfer 
+
+{ "fromUsername": "Ayush", 
+  "toUsername": "Shivam", 
+  "amount": 150.00,
+  "idempotencyKey": "wallet-key-001"
+}
+
+
+Check Balance 
+GET    /api/v1/wallets/balance/Ayush 
+       /api/v1/wallets/balance/Shivam
+
+
+Verify Data on H2.
+
+REDIS Server:
+docker compose up -d redis
+
+Check Redis Keys:
+open Redis insight app
+
+
+
+
+# Test RabbitMQ Messaging:
+
+1. **Start RabbitMQ**: 
+   `docker compose up -d rabbitmq`
+2. **Open Dashboard**:
+   http://localhost:15672 (guest/guest)
+3. **Run App (Mock Mode is OK)**:
+   `.\mvnw spring-boot:run "-Dspring-boot.run.profiles=mock"`
+4. **Trigger**:
+   Process a payment via Postman.
+5. **Observe**:
+   Check your Terminal. You will see:
+   `[MQ] RECEIVED PAYMENT NOTIFICATION`
+   `Order ID: ORDER-123 ...`
+
+
+DOCKER START:  for full project run, not  mock @@
+docker compose up -d rabbitmq
+
+
+
+STRESS TEST payment_service: in powershell
+1..200 | ForEach-Object {
+    Invoke-RestMethod -Uri "http://localhost:8080/api/v1/mock/payments/process" `
+    -Method Post `
+    -ContentType "application/json" `
+    -Body (@{
+        orderId = "ORDER-$_"
+        amount = 200
+        currency = "INR"
+        paymentMethodId = "pm_upi"
+        idempotencyKey = "stress_key-$_"
+    } | ConvertTo-Json)
+}

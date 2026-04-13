@@ -1,0 +1,6 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.compile.nullAnalysis.mode": "automatic",
+    "maven.terminal.useMavenWrapper": true,
+    "java.debug.settings.onBuildFailureProceed": true
+}
