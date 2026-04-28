@@ -1,8 +1,9 @@
 package com.plugpoint.paymentservice.service;
 
-import com.plugpoint.paymentservice.dto.WalletTransferEvent;
+import com.plugpoint.paymentservice.model.AppUser;
 import com.plugpoint.paymentservice.model.Wallet;
 import com.plugpoint.paymentservice.model.WalletTransaction;
+import com.plugpoint.paymentservice.repository.UserRepository;
 import com.plugpoint.paymentservice.repository.WalletRepository;
 import com.plugpoint.paymentservice.repository.WalletTransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,42 +20,64 @@ import java.time.LocalDateTime;
 public class WalletService {
 
     private final WalletRepository walletRepository;
+    private final UserRepository userRepository;
     private final WalletTransactionRepository transactionRepository;
-    private final PaymentEventProducer paymentEventProducer;
+    // NOTE: PaymentEventProducer removed — WalletService no longer publishes events.
+    // Events are published exclusively by WalletController (fire-and-forget),
+    // and consumed by PaymentEventConsumer which calls executeTransferOrdered() directly.
 
     @Transactional(readOnly = true)
     public BigDecimal getBalance(String username) {
         return walletRepository.findByUserUsername(username)
                 .map(Wallet::getBalance)
-                .orElseThrow(() -> new RuntimeException("Wallet not found for user: " + username));
+                .orElse(BigDecimal.ZERO);
+    }
+
+    public void transfer(String fromUsername, String toUsername, BigDecimal amount) {
+        if (fromUsername.equals(toUsername)) return;
+
+        // Ensure Wallets Exist (caller should pre-warm these before publishing the event,
+        // but this is kept as a safety net for direct calls in tests.)
+        ensureUserExists(fromUsername);
+        ensureUserExists(toUsername);
+
+        // Execute Transfer with ORDERED LOCKING to prevent deadlocks
+        executeTransferOrdered(fromUsername, toUsername, amount);
+
+        // NOTE: triggerTransferEvent() REMOVED intentionally.
+        // The event is published by WalletController BEFORE the consumer executes this method.
+        // Re-publishing here would create an infinite loop:
+        //   Controller → publishes event → Consumer → executeTransferOrdered ✅
+        //   (Old path: Controller → transfer() → executeTransferOrdered + publish → Consumer → executeTransferOrdered again ❌)
     }
 
     @Transactional
-    public void transfer(String fromUsername, String toUsername, BigDecimal amount) {
-        log.info("Initiating transfer of {} from {} to {}", amount, fromUsername, toUsername);
+    public void executeTransferOrdered(String fromUsername, String toUsername, BigDecimal amount) {
+        // DEADLOCK PREVENTION: Always lock in alphabetical order
+        String first = fromUsername.compareTo(toUsername) < 0 ? fromUsername : toUsername;
+        String second = first.equals(fromUsername) ? toUsername : fromUsername;
 
-        if (fromUsername.equals(toUsername)) {
-            throw new RuntimeException("Cannot transfer money to the same account.");
+        // Lock first resource, then second
+        walletRepository.findByUserUsernameWithLock(first);
+        walletRepository.findByUserUsernameWithLock(second);
+
+        // Now fetch them for the actual logic (already locked)
+        Wallet sender = walletRepository.findByUserUsername(fromUsername)
+                .orElseThrow(() -> new RuntimeException("Sender not found"));
+        Wallet receiver = walletRepository.findByUserUsername(toUsername)
+                .orElseThrow(() -> new RuntimeException("Receiver not found"));
+
+        if (sender.getBalance().compareTo(amount) < 0) {
+            log.warn("[Wallet] Insufficient funds for {}", fromUsername);
+            return;
         }
 
-        Wallet senderWallet = walletRepository.findByUserUsername(fromUsername)
-                .orElseThrow(() -> new RuntimeException("Sender wallet not found: " + fromUsername));
+        sender.debit(amount);
+        receiver.credit(amount);
 
-        Wallet receiverWallet = walletRepository.findByUserUsername(toUsername)
-                .orElseThrow(() -> new RuntimeException("Receiver wallet not found: " + toUsername));
+        walletRepository.save(sender);
+        walletRepository.save(receiver);
 
-        if (senderWallet.getBalance().compareTo(amount) < 0) {
-            throw new RuntimeException("Insufficient funds in sender's wallet.");
-        }
-
-        // Atomically update balances
-        senderWallet.debit(amount);
-        receiverWallet.credit(amount);
-
-        walletRepository.save(senderWallet);
-        walletRepository.save(receiverWallet);
-
-        // Save Transaction History record
         transactionRepository.save(WalletTransaction.builder()
                 .fromUsername(fromUsername)
                 .toUsername(toUsername)
@@ -62,20 +85,22 @@ public class WalletService {
                 .currency("USD")
                 .timestamp(LocalDateTime.now())
                 .build());
-
-        // Send RabbitMQ event
-        try {
-            paymentEventProducer.sendTransferEvent(WalletTransferEvent.builder()
-                    .fromUsername(fromUsername)
-                    .toUsername(toUsername)
-                    .amount(amount)
-                    .currency("USD")
-                    .timestamp(LocalDateTime.now())
-                    .build());
-        } catch (Exception e) {
-            log.error("Failed to send wallet transfer MQ event: {}", e.getMessage());
-        }
-
-        log.info("Transfer successful.");
     }
+
+    public synchronized void ensureUserExists(String username) {
+        if (userRepository.findByUsername(username).isEmpty()) {
+            log.info("[Wallet] Auto-provisioning user: {}", username);
+            AppUser user = userRepository.save(AppUser.builder()
+                    .username(username)
+                    .email(username.toLowerCase() + "@example.com")
+                    .build());
+
+            walletRepository.save(Wallet.builder()
+                    .user(user)
+                    .balance(new BigDecimal("10000.00"))
+                    .currency("USD")
+                    .build());
+        }
+    }
+
 }

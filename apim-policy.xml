@@ -1,0 +1,16 @@
+<policies>
+    <inbound>
+        <base />
+        <!-- Rate limiting: 5 requests per 60 seconds per subscription -->
+        <rate-limit calls="5" renewal-period="60" />
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>

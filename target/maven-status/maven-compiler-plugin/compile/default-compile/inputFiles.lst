@@ -8,12 +8,11 @@ D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint
 D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\repository\PaymentRepository.java
 D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\model\Wallet.java
 D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\repository\WalletTransactionRepository.java
-D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\service\StripePaymentService.java
 D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\config\DataInitializer.java
 D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\model\WalletTransaction.java
 D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\dto\TransferRequest.java
 D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\config\RedisConfig.java
-D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\config\MQConfig.java
+D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\service\MockPaymentService.java
 D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\controller\PaymentController.java
 D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\repository\WalletRepository.java
 D:\ANTIGRATIVY TESTS\Payment Processing Microservice\src\main\java\com\plugpoint\paymentservice\service\PaymentEventProducer.java

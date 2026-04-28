@@ -1,0 +1,7 @@
+{
+  "orderId": "ORD-V11-FINAL",
+  "amount": 6.66,
+  "currency": "USD",
+  "paymentMethodId": "pm_mock",
+  "idempotencyKey": "key-v11-final"
+}

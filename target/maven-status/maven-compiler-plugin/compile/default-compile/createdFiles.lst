@@ -20,16 +20,15 @@ com\plugpoint\paymentservice\config\DataInitializer.class
 com\plugpoint\paymentservice\model\Payment.class
 com\plugpoint\paymentservice\config\RedisConfig.class
 com\plugpoint\paymentservice\dto\WalletTransferEvent$WalletTransferEventBuilder.class
-com\plugpoint\paymentservice\config\MQConfig.class
 com\plugpoint\paymentservice\model\WalletTransaction$WalletTransactionBuilder.class
 com\plugpoint\paymentservice\exception\GlobalExceptionHandler.class
 com\plugpoint\paymentservice\model\AppUser.class
 com\plugpoint\paymentservice\service\PaymentEventProducer.class
 com\plugpoint\paymentservice\dto\PaymentEvent$PaymentEventBuilder.class
-com\plugpoint\paymentservice\service\StripePaymentService.class
 com\plugpoint\paymentservice\dto\PaymentRequest.class
 com\plugpoint\paymentservice\dto\TransferRequest$TransferRequestBuilder.class
 com\plugpoint\paymentservice\dto\TransferRequest.class
+com\plugpoint\paymentservice\service\MockPaymentService.class
 com\plugpoint\paymentservice\repository\WalletTransactionRepository.class
 com\plugpoint\paymentservice\dto\PaymentEvent.class
 com\plugpoint\paymentservice\service\PaymentEventConsumer.class

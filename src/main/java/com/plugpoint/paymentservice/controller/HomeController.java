@@ -15,7 +15,7 @@ public class HomeController {
         response.put("service", "Payment Processing Microservice");
         response.put("status", "UP");
         response.put("message", "Welcome! The microservice is running successfully.");
-        
+
         Map<String, String> endpoints = new HashMap<>();
         endpoints.put("Mock Process Payment", "POST /api/v1/mock/payments/process");
         endpoints.put("Mock Fail Payment", "POST /api/v1/mock/payments/fail");
@@ -23,7 +23,7 @@ public class HomeController {
         endpoints.put("Check Wallet Balance", "GET /api/v1/wallets/balance/{username}");
         endpoints.put("User-to-User Transfer", "POST /api/v1/wallets/transfer");
         endpoints.put("H2 Console", "/h2-console");
-        
+
         response.put("available_endpoints", endpoints);
         return response;
     }

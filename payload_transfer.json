@@ -1,0 +1,6 @@
+{
+  "fromUsername": "alice",
+  "toUsername": "bob",
+  "amount": 5.00,
+  "idempotencyKey": "transfer-v6-live"
+}

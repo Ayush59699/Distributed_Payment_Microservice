@@ -21,4 +21,5 @@ public class WalletTransferEvent implements Serializable {
     private BigDecimal amount;
     private String currency;
     private LocalDateTime timestamp;
+    private String idempotencyKey;
 }
